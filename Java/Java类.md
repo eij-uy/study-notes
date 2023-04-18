@@ -255,7 +255,7 @@ class 子类 extends 父类 {
 	5. 如果父类没有就按照(4)的规则，继续找上级父类，直到Object...  
 	6. 如果都没有就会报错
 
-![](D:\study\markdown\Java\images\Java继承-new子类时内存分布.png)
+![](E:\Study\Java\Java\images\Java继承-new子类时内存分布.png)
 
 #### super关键字
 
@@ -311,12 +311,12 @@ class 子类 extends 父类 {
 
 ~~~java
 //父类
-class parent {
+class Parent {
     public Object getInfo(){}
 }
 
 //子类
-class children extends parent {
+class Children extends Parent {
     public String getInfo(){}
 }
 
@@ -331,12 +331,12 @@ class children extends parent {
 
 ~~~java
 //父类
-class parent {
+class Parent {
     public void eat(){}
 }
 
 //子类
-class children extends parent {
+class Children extends Parent {
     protected void eat(){} // 报错, 缩小了父类方法的访问权限
 }
 ~~~
@@ -396,4 +396,355 @@ class children extends parent {
    animal = new Cat(); // animal运行类型变成了Cat, 编译类型仍然是Aniaml
    ```
 
+
+#### 注意事项和细节
+
+**多态的前提是：两个对象（类）存在继承关系**
+
+##### 多态的向上转型
+
+1. 本质：父类的引用指向了子类的对象；
+
+2. 语法：父类类型 引用名 = new 子类类型（）；
+
+3. 特点：编译类型看左边，运行类型看右边。
+
+    1. 可以调用父类中的所有成员（需遵循访问权限）
+
+    2. 不能调用子类中特有成员； 
+
+       **因为在编译阶段，能调用哪些成员，是由编译类型来决定的**
+
+    3. 最终运行效果看子类的具体实现
+
+       **即调用方法时，按照从子类开始查找方法，然后按照就近原则调用**
+
+~~~java
+//父类
+class Parent {
+    public void eat(){}
+    public void setInfo(){}
+}
+
+//子类 
+class Children extends Parent {
+    public void eat(){}
+    public void getInfo(){}
+}
+
+Parent parent = new Children();
+
+parent.setInfo(); // 可以
+parent.eat(); // 可以
+parent.getInfo(); // 不可以
+
+// 多态的向上转型可以调用父类中的所有成员（遵循访问权限），但是不能调用子类的特有成员
+// 因为在编译阶段，能调用哪些成员是由编译类型来决定的
+// 最终运行效果看子类的具体实现，即调用方法时，按照从子类开始查找方法，然后按照就近原则调用
+~~~
+
+##### 多态的向下转型
+
+###### 语法：子类类型 引用名 = （子类类型）父类引用
+
+1. 只能强转父类的引用，不能强转父类的对象
+2. 要求父类的引用必须指向是当前目标类型的对象
+3. 当向下转型后，就可以调用子类类型中所有的成员
+
+~~~java
+//父类
+class Parent {
+    public void eat(){}
+    public void setInfo(){}
+}
+
+//子类 
+class Children extends Parent {
+    public void eat(){}
+    public void getInfo(){}
+}
+
+Parent parent = new Children();
+//多态的向下转型
+Children children = (Children) parent;
+//!只能把指向Children的parent强转为Children
+children。getInfo() //可以了
+
+~~~
+
+##### 属性没有重写，属性的值看编译类型
+
+~~~java
+//父类
+class Parent {
+   	int count = 10
+}
+
+//子类 
+class Children extends Parent {
+    int count = 20
+}
+
+Parent parent = new Children();
+parent.count = ? //10
+
+~~~
+
+#### instansOf 比较操作符
+
+**用于判断对象的运行类型是否为XX类型或XX类型的子类型**
+
+~~~java
+class Parent {
+    
+}
+
+class Children extends Parent {
+    
+}
+
+Children children = new Children();
+System.ou.println(children instanceof Children); // true
+System.out.println(chidlren instanceof Parent); // true
+
+Parent parent = new Children();
+System.out.println(parent instanceof Parent); // true
+System.out.println(parent instanceof Children); // true
+
+Object obj = new Object();
+System.out.println(obj instanceof Parent); // false
+String str = "hello"
+System.out.println(str instanceof Parent); // false
+System.out.println(str instanceof Object); // true
+~~~
+
+#### java的动态绑定机制（非常重要）
+
+1. 当调用对象方法的时候，**该方法会和该对象的内存地址/运行类型绑定**
+2. 当调用对象属性时，没有动态绑定机制，哪里声明，哪里使用
+
+~~~java
+class A {
+    public int i = 10;
+    public int sum(){
+        return getI() + 10;
+    }
+    public int sum1(){
+        return i + 10;
+    }
+    public int sum2(){
+        return getI() + 20
+    }
+    public int sum3(){
+        return i + 20
+    }
+    public int getI(){
+        return i;
+    }
+}
+
+class B extends A {
+    public int i = 20;
+    public int sum(){
+        return i + 20;
+    }
+    public int getI(){
+        return i;
+    }
+    public int sum1(){
+        return i + 10;
+    }
+}
+
+A a = new B(); // 向上转型
+System.out.println(a.sum()); // 40
+System.out.println(a.sum1()); // 30
+
+System.out.println(a.sum2()); // 20 + 20 = 30
+// 调用 sum2 时，与运行类型绑定，a 的运行类型是 B，所以调用的 getI 是B类里的 getI
+System.out.println(a.sum3()); // 10 + 20 = 30
+// 调用 sum3 时，因为属性没有动态绑定机制，所以在当前类中找到 i = 10， 所以结果是10 + 20 = 30
+~~~
+
+#### 多态的应用
+
+##### 多态数组
+
+数组的定义类型为父类类型， 里面保存的实际元素类型为子类类型
+
+~~~java
+public class Person {
+    private String name;
+    private int age;
+
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+    public String say(){
+        return "Hello World my name is " + this.name + "age=" + this.age ;
+    }
+
+}
+
+public class Student extends Person {
+    private double score;
+
+    public Student(String name, int age, double score) {
+        super(name, age);
+        this.score = score;
+    }
+
+    public double getScore() {
+        return score;
+    }
+
+    public void setScore(double score) {
+        this.score = score;
+    }
+
+    @Override
+    public String say() {
+        return super.say() + "score" + this.score;
+    }
+
+    public void study(){
+        System.out.println("学生" + getName() + "正在学java");
+    }
+}
+
+
+public class Teacher extends Person {
+    double salary;
+
+    public Teacher(String name, int age, double salary) {
+        super(name, age);
+        this.salary = salary;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+
+    public void setSalary(double salary) {
+        this.salary = salary;
+    }
+
+    @Override
+    public String say() {
+        return super.say() + "salary=" + this.salary;
+    }
+
+    public void teach(){
+        System.out.println("老师" + getName() + "正在授课");
+    }
+}
+
+
+public class PolyArray {
+    public static void main(String[] args) {
+        //现有一个继承结构如下：要求创建一个Person对象
+        //Person person = new Person("余杰",18);
+        //Student stu1 = new Student("xx",20, 91.1);
+        //Student stu2 = new Student("xxx", 19, 59.9);
+        //Teacher teacher1 = new Teacher("猪毛", 55, 2010);
+        //Teacher teacher2 = new Teacher("雷哥", 66, 3210);
+
+        //Person[] persons = {person, stu1, stu2, teacher1, teacher2};
+		
+        Person[] persons = new Person[5];
+        persons[0] = new Person("余杰",18);
+        persons[1] = new Student("xx",20, 91.1);
+        persons[2] = new Student("xxx", 19, 59.9);
+        persons[3] = new Teacher("猪毛", 55, 2010);
+        persons[4] = new Teacher("雷哥", 66, 3210);
+        
+        for(int i = 0; i < persons.length; i++){
+            if(persons[i] instanceof Student){
+                Student stu3 = (Student) persons[i];
+                stu3.study();
+            }else if(persons[i] instanceof Teacher){
+                Teacher teacher3 = (Teacher) persons[i];
+                teacher3.teach();
+            }
+            System.out.println(persons[i].say());
+        }
+    }
+}
+~~~
+
+##### 多态参数
+
+方法定义的形参类型为父类类型，实参类型允许为子类类型
+
+### Object类详解
+
+#### equals和==对比
+
+- ==
+
+1. 既可以判断基本类型，又可以判断引用类型
+
+2. 如果判断基本类型，判断的是值是否相等
+
+3. 如果判断引用类型，判断的是地址是否相等，即判定是不是同一个对象
+
+   ~~~java
+   class B {}
+   class A {}
    
+   A a = new A();
+   A b = a;
+   A c = b;
+   System.out.println(a == c); //true
+   System.out.println(b == c); //true
+   B newB = a;
+   System.out.println(newB == c); //true 
+   // 虽然编译类型不一样了，但是他们保存的地址指向的还是同一个对象
+   
+   int num1 = 10;
+   double num2 = 10.0;
+   System.out.println(num1 == num2); // true 基本类型判 => 断值相等
+   ~~~
+
+- equals
+  1. 只能判断引用类型
+  2. 默认判断的是地址是否相等，子类中往往重写该方法。用于判断内容是否相等，比如Integer，String
+
+~~~java
+//子类重写equals
+class Person {
+    String name;
+    int age;
+    String genner;
+    public boolean equals(Object obj){
+        if(this == obj){ //如果穿进来的对象和当前对象是同一个对象直接返回true
+            return true;
+        }
+        //如果穿进来的对象 是 Person 类型或它的子类型
+        if(obj instansof Person){
+            //进行向下转型,这里的向下转型是为了拿到obj上的属性方法，因为这时候obj的编译类型还是Object
+            Person p = (Person)obj;
+            return this.name.equals(p.name) && this.age == p.age && this.genner == p.genner
+        }
+        return false
+    }
+}
+~~~
+
