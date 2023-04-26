@@ -119,11 +119,29 @@ class 类名 implements 接口 {
    
    for(int i = 0; i < usbs.length; i++){
        if(usbs[i] instanceof Phone){
+           //((Phone) usbs[i]).call(); //简写
            Phone ph = (Phone) usbs[i];
            ph.call();
        }
        usbs[i].work();
    }
+~~~
+   
+3. 多态传递
+
+   ~~~java
+   public class InterfacePolyPass {
+       public static void main(String[] args){
+           IG ig = new Teacher();
+           IH ih = new Teacher(); // 如果 IG 没有继承 IH 那么这一句会报错
+           // 也就是说 如果 IG 继承了 IH 接口, 而Teacher 类实现了IG接口 那么,实际上就相当于 Teacher 类也实现了 IH 接口
+           // 这就是多态传递
+       }
+   }
+   
+   class IH {}
+   class IG extends IH {}
+   class Teacher implements IG {}
    ~~~
 
    
