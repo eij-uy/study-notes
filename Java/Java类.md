@@ -1368,5 +1368,80 @@ class Other { // 外部其他类
   
 - 定义在外部类的成员位置上
   - 成员内部类 ( 没用static修饰 )
+  
+    1. 可以访问外部类的所有成员， 包含私有的
+  
+    2. 可以添加任意访问修饰符( public、protected、默认、private )，因为它的地位就是一个成员
+  
+    3. 作用域和外部类的成员一样， 为整个类体，在外部类的成员方法中创建成员内部类对象，再调用方法
+  
+    4. 成员内部类 --- 访问 ---->  外部类( 比如： 属性 ) 【访问方式: 直接访问】
+  
+    5. 外部类 --- 访问 ----> 内部类
+  
+       访问方式： 创建对象， 再访问
+  
+    6. 外部其他类 --- 访问 ----> 成员内部类
+  
+    7. 如果外部类和内部类的成员重名时，内部类访问的话，默认遵循就近原则，如果想要访问外部类的成员， 则可以使用( 外部类名.this.成员 ) 去访问
+  
+  ~~~java
+  class Outer {
+      private int n = 10;
+      public String name = "张三";
+      //可以添加任意访问修饰符，因为它的地位就是一个成员
+      public class Inner {
+          public void say(){
+              System.out.println("n=" + n + "name=" + name);
+          }
+      }
+      public Inner getInnerInstance(){
+          return new Inner();
+      }
+  }
+  //6.外部其他类 --- 访问 ---> 成员内部类 三种方式
+  //1.语法
+  Outer.Inner test = Outer.new Inner();
+  //2.在外部类中，编写一个方法，可以返回内部类对象
+  Outer.Inner test = Outer.getInnerInstance();
+  //3.和第一种方式一样的原理
+  Outer.Inner test = new Outer().new Inner();
+  ~~~
+  
+  
+  
   - 静态内部类 ( 使用static修饰 )
-
+  
+  1. 可以直接访问外部类的所有静态成员，包括私有的，但不能直接访问非静态成员
+  
+  2. 可以添加任意访问修饰符 ( public、protected、默认、private )，因为它的地位就是一个成员
+  
+  3. 作用域：同其他的成员，为整个类体
+  
+  4. 静态内部类 --- 访问 ---> 外部类 ( 比如：静态属性 ) 【访问方式：直接访问所有静态成员】
+  
+  5. 外部类 --- 访问 ---> 静态内部类 访问方式：创建对象，再访问 
+  
+  6. 外部其他类 --- 访问 ---> 静态内部类
+  
+  7. 如果外部类和静态内部类的成员重名时，静态内部类访问的时，默认遵循就近原则，如果想访问外部类的成员，则可以使用 ( 外部类名.成员 ) 去访问
+  
+     ~~~java
+     class Outer {
+         static class Inner {
+             
+         }
+         public Inner getInnerInstance(){
+             return new Inner();
+         }
+     }
+     
+     //1.因为静态内部类，是可以通过类名直接访问，前提是满足访问权限
+     Outer.Inner inner = new Outer.Inner();
+     //2.编写一个方法，可以返回静态内部类的对象实例, 可以通过静态方法返回，就不用new外部类了
+     Outer.Inner inner = new Outer().getInnerInstance();
+     //3.
+     
+     ~~~
+  
+     
