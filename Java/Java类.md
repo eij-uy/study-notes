@@ -1338,7 +1338,7 @@ class Other { // 外部其他类
     
     //基于接口的匿名内部类
     //编译类型是 IA
-    //运行类型是 外部类$1
+    //运行类型是 外部类$15
     IA tiger = new IA() {
     	try(){
             System.out.println("xxx");
@@ -1401,7 +1401,7 @@ class Other { // 外部其他类
   }
   //6.外部其他类 --- 访问 ---> 成员内部类 三种方式
   //1.语法
-  Outer.Inner test = Outer.new Inner();
+  Outer.Inner test = outer.new Inner();
   //2.在外部类中，编写一个方法，可以返回内部类对象
   Outer.Inner test = Outer.getInnerInstance();
   //3.和第一种方式一样的原理
