@@ -11,3 +11,9 @@
 - 自动的分配变量名， 通过在后面.var
 - ...
 
+## Debug 配置
+
+- Debug 时不显示空值
+
+  **解决办法: setting	--->	Build, Execution, Deployment	--->	Debugger	--->	Data Views	--->	Java 中取消勾选 Hide null elements in arrays and collections 和 Enable alternative view for Collections classes**
+
