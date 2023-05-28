@@ -4,7 +4,7 @@
 
 接口就是给出一些没有实现的方法, 封装到一起, 到某个类要使用的时候, 在根据具体情况把这些方法写出来.
 
-1. 如果一个类 implements实现 接口
+1. 如果一个类 implements 实现 接口
 2. 需要将该接口的所有抽象方法都实现
 
 # 语法
@@ -125,6 +125,7 @@ class 类名 implements 接口 {
        }
        usbs[i].work();
    }
+   ~~~
 ~~~
    
 3. 多态传递
@@ -142,6 +143,6 @@ class 类名 implements 接口 {
    class IH {}
    class IG extends IH {}
    class Teacher implements IG {}
-   ~~~
+~~~
 
    
