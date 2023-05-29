@@ -453,7 +453,7 @@ pnpm commitlint
 ~~~javascript
 if(!/pnpm/.test(process.env.npm_execpath || "")){
     console.warn(
-    	`\u001[33mThis repository must using pnpm as the package manager` +
+    	`\u001b[33mThis repository must using pnpm as the package manager` +
         `for scripts to work properly.\u001b[39m\n`,
     )
     process.exit(1)
@@ -529,7 +529,7 @@ export default defineConfig(({ command, mode }) => {
 })
 ~~~
 
-**TypeScript 编译配置**
+##### TypeScript 编译配置
 
 ~~~json
 // tsconfig.json
@@ -541,5 +541,412 @@ export default defineConfig(({ command, mode }) => {
         }
     }
 }
+~~~
+
+#### 3.3、环境变量的配置
+
+**项目开发过程中，至少会经历开发环境、测试环境和生产环境 ( 即正式环境 ) 三个阶段。不同阶段请求的状态 ( 如接口地址等 ) 不尽相同，若手动切换接口地址是相当繁琐且易出错的。于是环境变量配置的需求就应运而生，我们只需做简单的配置，把环境状态切换的工作交给代码**
+
+- 开发环境【development】
+
+  顾名思义，开发使用的环境，每位开发人员在自己的 dev 分支上干活，开发到一定程度，同事会合并代码，进行联调
+
+- 测试环境【testing】
+
+  测试同事干活的环境，一般会由测试同事自己来部署，然后再此环境进行测试
+
+- 生产环境【prodection】
+
+  生产环境是指正式提供对外服务的，一般会关掉错误报告，打开错误日志。( 正式提供给客户使用的环境 )
+
+##### 项目根目录分别添加 开发、生产和测试环境的文件
+
+~~~javascript
+.env.development
+.env.production
+.env.test
+~~~
+
+文件内容
+
+~~~javascript
+# 变量必须以 Vite_ 为前缀才能暴露给外部读取
+NODE_ENV=development
+VITE_APP_TITLE=甄选运营平台
+VITE_APP_BASE_API=/dev-api
+~~~
+
+~~~javascript
+NODE_ENV=production
+VITE_APP_TITLE=甄选运营平台
+VITE_APP_BASE_API=/prod-api
+~~~
+
+~~~javascript
+NODE_ENV=test
+VITE_APP_TITLE=甄选运营平台
+VITE_APP_BASE_API=/test-api
+~~~
+
+配置运行命令
+
+~~~json
+"scripts": {
+    "dev": "vite --open",
+    "build:test": "vue-tsc && vite build --mode test",
+    "build:pro": "vue-tsc && vite build --mode production",
+    "preview": "vite preview"
+}
+~~~
+
+通过 import.meta.env 获取环境变量
+
+#### 3.4、SVG 图标配置
+
+在开发项目的时候经常会用到 svg 矢量图，而且我们使用 svg 以后，页面上加载的不再是图片资源
+
+这对页面性能来说是个很大的提升，而且我们 svg 文件比 img 要小很多，放在项目中几乎不占用资源
+
+##### 安装 svg 依赖插件
+
+~~~javascript
+pnpm add vite-plugin-svg-icons -D
+~~~
+
+##### 在  `vite.config.ts` 中配置插件
+
+~~~javascript
+import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
+import { resolve } from 'path'
+export default () => {
+    return {
+        plugins: [
+            createSvgIconsPlugin({
+                iconDirs: [resolve(process.cwd(), 'src/assets/icons')],
+                symbolId: 'icon-[dir]-[name]'
+            })
+        ]
+    }
+}
+~~~
+
+##### 入口文件导入
+
+~~~javascript
+import 'virtual:svg-icons-register'
+~~~
+
+##### svg 封装为全局组件，使用unplugin-vue-components 可忽略
+
+因为项目很多模块需要使用图标，因此把它封装为全局组件
+
+**在 src/components 目录下创建一个 SvgIcon 组件：代表如下**
+
+~~~javascript
+<template>
+  <div>
+    <svg :style="{ width: width, height: height }">
+      <use :xlink:href="prefix + name" :fill="color"></use>
+    </svg>
+  </div>
+</template>
+
+<script setup lang="ts">
+withDefaults(defineProps<{
+    prefix: string,
+    icon: string,
+    color?: string,
+    width?: string,
+    height?: string
+  }>(), {
+    prefix: '#icon-',
+    color: '',
+    width: '16px',
+    height: '16px'
+  })
+</script>
+<style scoped></style>
+~~~
+
+在 src 文件夹目录下创建一个 index.ts 文件：用于注册 components 文件夹内部全部全局组件
+
+~~~javascript
+import SvgIcon from './SvgIcon/index.vue';
+import type { App, Component } from 'vue';
+const components: { [name: string]: Component } = { SvgIcon };
+export default {
+    install(app: App) {
+        Object.keys(components).forEach((key: string) => {
+            app.component(key, components[key]);
+        })
+    }
+}
+~~~
+
+在入口文件引入 src/index.ts 文件，通过 app.use 方法安装自定义插件
+
+~~~javascript
+import gloablComponent from './components/index';
+app.use(gloablComponent);
+~~~
+
+#### 3.5、集成 sass
+
+我们目前在组件内部已经可以使用scss样式,因为在配置styleLint工具的时候，项目当中已经安装过sass sass-loader,因此我们再组件内可以使用scss语法！！！需要加上lang="scss"
+
+~~~javascript
+<style scoped lang="scss"></style>
+~~~
+
+接下来我们为项目添加一些全局的样式
+
+在src/styles目录下创建一个index.scss文件，当然项目中需要用到清除默认样式，因此在index.scss引入reset.scss
+
+~~~javascript
+@import reset.scss
+~~~
+
+在入口文件引入
+
+~~~javascript
+import '@/styles'
+~~~
+
+但是你会发现在src/styles/index.scss全局样式文件中没有办法使用$变量.因此需要给项目中引入全局变量$.
+
+在style/variable.scss创建一个variable.scss文件！
+
+在vite.config.ts文件配置如下:
+
+~~~javascript
+export default defineConfig((config) => {
+	return {
+        css: {
+          preprocessorOptions: {
+            scss: {
+              javascriptEnabled: true,
+              additionalData: '@import "./src/styles/variable.scss";',
+            },
+          },
+        },
+    }
+}
+~~~
+
+`@impoty "./src/styles/variable,scss";` 后面的分好不要忘记，不然会报错
+
+配置完毕你会发现 scss 提供这些全局变量可以再组件样式中使用了
+
+#### 3.6、mock 数据
+
+安装依赖:https://www.npmjs.com/package/vite-plugin-mock
+
+~~~javascript
+pnpm add -D vite-plugin-mock mockjs
+~~~
+
+在 vite.config.js 配置文件启用插件
+
+~~~javascript
+import { UserConfigExport, ConfigEnv, defineConfig } from 'vite'
+import { viteMockServe } from 'vite-plugin-mock'
+import vue from '@vitejs/plugin-vue'
+export default defineConfig({ command })=> {
+  return {
+    plugins: [
+      vue(),
+      viteMockServe({
+        enable: command === 'serve',
+      }),
+    ],
+  }
+}
+~~~
+
+在根目录创建mock文件夹:去创建我们需要mock数据与接口！！！
+
+在mock文件夹内部创建一个user.ts文件
+
+~~~javascript
+//用户信息数据
+function createUserList() {
+    return [
+        {
+            userId: 1,
+            avatar:
+                'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
+            username: 'admin',
+            password: '111111',
+            desc: '平台管理员',
+            roles: ['平台管理员'],
+            buttons: ['cuser.detail'],
+            routes: ['home'],
+            token: 'Admin Token',
+        },
+        {
+            userId: 2,
+            avatar:
+                'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
+            username: 'system',
+            password: '111111',
+            desc: '系统管理员',
+            roles: ['系统管理员'],
+            buttons: ['cuser.detail', 'cuser.user'],
+            routes: ['home'],
+            token: 'System Token',
+        },
+    ]
+}
+
+export default [
+    // 用户登录接口
+    {
+        url: '/api/user/login',//请求地址
+        method: 'post',//请求方式
+        response: ({ body }) => {
+            //获取请求体携带过来的用户名与密码
+            const { username, password } = body;
+            //调用获取用户信息函数,用于判断是否有此用户
+            const checkUser = createUserList().find(
+                (item) => item.username === username && item.password === password,
+            )
+            //没有用户返回失败信息
+            if (!checkUser) {
+                return { code: 201, data: { message: '账号或者密码不正确' } }
+            }
+            //如果有返回成功信息
+            const { token } = checkUser
+            return { code: 200, data: { token } }
+        },
+    },
+    // 获取用户信息
+    {
+        url: '/api/user/info',
+        method: 'get',
+        response: (request) => {
+            //获取请求头携带token
+            const token = request.headers.token;
+            //查看用户信息是否包含有次token用户
+            const checkUser = createUserList().find((item) => item.token === token)
+            //没有返回失败的信息
+            if (!checkUser) {
+                return { code: 201, data: { message: '获取用户信息失败' } }
+            }
+            //如果有返回成功信息
+            return { code: 200, data: {checkUser} }
+        },
+    },
+]
+~~~
+
+#### 3.7、axios 的二次封装
+
+##### 安装 axios
+
+~~~javascript
+pnpm add axios
+~~~
+
+在开发项目的时候避免不了与后端进行交互,因此我们需要使用axios插件实现发送网络请求。在开发项目的时候
+
+我们经常会把axios进行二次封装。
+
+目的:
+
+1:使用请求拦截器，可以在请求拦截器中处理一些业务(开始进度条、请求头携带公共参数)
+
+2:使用响应拦截器，可以在响应拦截器中处理一些业务(进度条结束、简化服务器返回的数据、处理http网络错误)
+
+在根目录下创建utils/request.ts
+
+~~~javascript
+import axios from "axios";
+import { ElMessage } from "element-plus";
+//创建axios实例
+let request = axios.create({
+    baseURL: import.meta.env.VITE_APP_BASE_API,
+    timeout: 5000
+})
+//请求拦截器
+request.interceptors.request.use(config => {
+    return config;
+});
+//响应拦截器
+request.interceptors.response.use((response) => {
+    return response.data;
+}, (error) => {
+    //处理网络错误
+    let msg = '';
+    let status = error.response.status;
+    switch (status) {
+        case 401:
+            msg = "token过期";
+            break;
+        case 403:
+            msg = '无权访问';
+            break;
+        case 404:
+            msg = "请求地址错误";
+            break;
+        case 500:
+            msg = "服务器出现问题";
+            break;
+        default:
+            msg = "无网络";
+
+    }
+    ElMessage({
+        type: 'error',
+        message: msg
+    })
+    return Promise.reject(error);
+});
+export default request;
+~~~
+
+#### 3.8、接口统一管理
+
+在开发项目的时候,接口可能很多需要统一管理。在src目录下去创建api文件夹去统一管理项目的接口；
+
+比如:下面方式
+
+~~~javascript
+//统一管理咱们项目用户相关的接口
+
+import request from '@/utils/request'
+
+import type {
+
+ loginFormData,
+
+ loginResponseData,
+
+ userInfoReponseData,
+
+} from './type'
+
+//项目用户相关的请求地址
+
+enum API {
+
+ LOGIN_URL = '/admin/acl/index/login',
+
+ USERINFO_URL = '/admin/acl/index/info',
+
+ LOGOUT_URL = '/admin/acl/index/logout',
+
+}
+//登录接口
+export const reqLogin = (data: loginFormData) =>
+ request.post<any, loginResponseData>(API.LOGIN_URL, data)
+//获取用户信息
+
+export const reqUserInfo = () =>
+
+ request.get<any, userInfoReponseData>(API.USERINFO_URL)
+
+//退出登录
+
+export const reqLogout = () => request.post<any, any>(API.LOGOUT_URL)
 ~~~
 
