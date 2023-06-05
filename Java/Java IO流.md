@@ -481,3 +481,199 @@ bufferedWriter.close();
 | System.in  | 标准输入 | InputStream  | 键盘     |
 | System.out | 标准输出 | OutputStream | 显示器   |
 
+~~~java
+// System.in -> public final static InputStream in = null;
+// System.in 编译类型 InputSrteam
+// System.in 运行类型 BufferedInputStream
+// 表示标准输入 -> 键盘
+// Scanner 是从 标准输入键盘接收数据
+System.in;
+
+// System.out -> public final static printStream out = null;
+// 编译类型是 PrintStream
+// 运行类型是 PrintStream
+// 表示标准输出 -> 显示器
+// System.out.println(); 方法就是使用 out 对象将数据输出到显示器
+System.out
+~~~
+
+#### 转换流 InputStreamReader 和 OutputStreamWriter
+
+**可以将 字节流 转换成 字符流**
+
+##### 介绍
+
+1. `InputStreamReader: Reader` 的子类，可以将 `InputStream(字节流)`包转成 `Reader(字符流)`
+2. `OutputStreamWriter: Writer` 的子类，实现将 `OutputStream(字节流)`包装成`Writer(字符流)`
+3. 当处理纯文本数据时，如果使用字符流效率更高，并且可以有效解决中文问题，所以建议将字节流转换成字符流
+4. 可以再使用时指定编码格式 ( 比如：`utf-8, gbk, gb2312, ISO8859-1`等 )
+
+~~~java
+// 演示使用 InputStreamReader 转换流解决中文乱码问题
+// 将字节流 FileInputStream 转成字符流 InputeStreamReader， 指定编码 gbk/utf-8
+String filePath = "e:\\a.txt";
+// 1. 把 FileInputStream 转成 InputStreamReader
+// 2. 指定编码 gbk
+// InputStreamReader isr = new InputStreamReader(new FileInputStream(filePath), "gbk");
+// 3. 把 InputStreamReader 传入 BufferedReader
+// BufferedReader br = new BufferedReader(isr);
+
+// 在开发中 我们常把 2 和 3 合在一起写
+BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "gbk"));
+
+// 4. 读取
+String s = br.readLine();
+System.out.println("读取内容=" + s);
+// 5. 关闭外层流
+br.close();
+~~~
+
+~~~java
+// 演示 OutputStreamWriter 的使用
+// 把 FileOutputStream 字节流，转成字符流 OutputStreamWriter
+// 指定处理的编码 gbk/utf-8/utf8
+String filePath = "e:\\xx.txt";
+OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(filePath), "gbk");
+osw.write("hi, Java");
+osw.close();
+System.out.println("保存文件成功~！")
+~~~
+
+#### 打印流 - PrintStream 和 PrintWriter
+
+**打印流只有输出流， 没有输入流**
+
+##### PrintStream 演示
+
+~~~java
+// 演示 PrintStream (字节打印流/输出流)
+PrintStream out = System,out;
+// 默认情况下， PrintStream 输出数据的位置是 标准输出，即显示器
+out.print("john, hello");
+// 因为 print 底层使用的是 write，所以我们可以直接调用 write 进行打印/输出
+out.write("余杰，你好".getBytes());
+out.close();
+
+// 我们可以去修改打印流输出的位置/设备
+// 1. 输出修改成到 e:\\f1.txt
+// 2. "hello, 余杰~~" 就会输出到 e:\\f1.txt
+System.setOut(new PrintStream("e:\\f1.txt"));
+System.out.println("hello, 余杰~~");
+
+~~~
+
+##### PrintWriter 演示
+
+~~~java
+// 演示 PrintWriter 使用方式
+// PrintWriter printWeiter = new PrintWriter(System.out);
+PrintWriter printWriter = new PrintWtier(new FileWriter("e:\\f2.txt"));
+printWriter.print("hi, 北京你好~");
+printWriter.clsose(); // flush 或 close，才会写入到文件中
+~~~
+
+## Properties 类
+
+**Properties 类的父类就是 HashTable， 底层就是 HashTable 核心方法**
+
+ ### 看一个需求
+
+一个配置文件 `mysql.properties`
+
+`ip = 192.168.0.13`
+
+`user = root`
+
+`pwd = 12345`
+
+要读取ip，user 和 pwd 的值是多少
+
+1. 传统方法
+
+   ~~~Java
+   // 读取 mysql.properties 文件，并得到 ip user pwd
+   BufferedReader br = new BufferedReader(new FileReader("src\\mysql.properties"));
+   String line = null;
+   while((line = br.readLine()) != null){ //循环读取
+       Sys.out.println(line);
+       Stirng[] strs = line.split("=");
+       System.out.println(strs[0] + "的值是:" + strs[1]);
+   }
+   ~~~
+
+2. 使用 Properties 类可以方便实现
+
+### Properties 的基本介绍
+
+   1. 专门用于读写配置文件的集合类
+
+      配置文件的格式：
+
+      ​	键=值
+
+      ​	键=值
+
+   2. 注意：键值对不需要有空格，值不需要用引号引起来。默认类型是 String
+
+   ### Properties 常用方法
+
+- `load`：加载配置文件的键值对到 `Properties` 对象
+- `list`：将数据显示到指定设备
+- `getProperty(key)`：根据键获取值
+- `setProperty(key, value)`：设置键值对到 `Properties`对象
+- `store`：将 `Properties` 中的键值对存储到配置文件，在 `idea` 中， 保存信息到配置文件，如果含有中文，会存储为 `unicode` 码
+
+**http://tool.chinaz.com/tools/unicode.aspx**  --->  unicode 码查询工具
+
+### 案例
+
+1. 使用 `Properties` 类完成对 `mysql.properties` 的读取
+
+   ~~~java
+   // 使用 Properties 类来读取 mysql.properties 文件
+   // 1. 创建 Properties 对象
+   Properties propertoes = new Properties();
+   // 2. 加载指定配置文件
+   properties(new FileReader("src\\mysql.properties"));
+   // 3. 把 key-val 显示到控制台
+   properties.list(System.out);
+   // 4. 根据 key 获取对应的 val
+   String user = properties.getProperty("user");
+   String pwd = properties.getProperty("pwd");
+   System.out.println("用户名=" + user);
+   System.out.println("密码=" + pwd);
+   ~~~
+
+2. 使用 `Properties` 类添加 `key-val` 到新文件 `mysql2.properties` 中
+
+   ~~~java
+   // 使用 Properties 类来创建 配置文件， 修改配置文件内容
+   Properties properties = new Properties();
+   // 1. 创建文件
+   properties.setProperty("cahrset", "utf8");
+   properties.setProperty("user","汤姆");
+   properties.setProperty("pwd","123456");
+   
+   // 将 key-val 存储文件即可, 这里的的第二个字段是 创建的配置文件的注释
+   properties.store(new FileOutputStream("src\\mysql2.properties")， null);
+   System.out.println("保存配置文件成功")
+   ~~~
+
+3. 使用 `Properties` 类完成对 `mysql.properties` 的读取，并修改某个 `key-val`
+
+   ~~~java
+   // 使用 Properties 类来创建 配置文件， 修改配置文件内容
+   Properties properties = new Properties();
+   // 1. 创建文件
+   // 1.1 这里如果该文件没有 key 就是创建
+   // 1.2 这里如果该文件有 key 就是修改
+   properties.setProperty("cahrset", "utf8");
+   properties.setProperty("user","汤姆");
+   properties.setProperty("pwd","123456");
+   
+   // 将 key-val 存储文件即可, 这里的的第二个字段是 创建的配置文件的注释
+   properties.store(new FileOutputStream("src\\mysql2.properties")， null);
+   System.out.println("保存配置文件成功")
+   ~~~
+
+   
