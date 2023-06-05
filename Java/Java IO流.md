@@ -341,3 +341,143 @@ public static void fileClone(String from, String to) throws IOException {
 
 1. 性能的提高：主要以增加缓存的方式来提高输入输出的效率
 2. 操作的便捷：处理流可能提供了一系列便捷的方法来一次输入输出大批量的数据，使用更加灵活方便
+
+#### 处理流 - BufferedReader 和 BufferedWriter
+
+- `BufferedReader` 和 `BufferedWriter` 属于字符流,是按照字符来读取数据的
+- 关闭时,只需要关闭外层流即可
+
+##### BufferedReader 案例
+
+~~~java
+BufferedReader bufferedReader = new BufferedReader(new FileReader("d:\\java\\test.txt"));
+char[] chars = new char[2];
+String line;
+// 说明
+// 1. bufferedReader.readLine 方法是按行读取文件
+// 2. 当返回 null 时,表示文件读取完毕
+while ((line = bufferedReader.readLine()) != null) {
+  System.out.println(line);
+}
+
+// 关闭流, 这里注意, 只需要关闭 BufferedReader,因为底层会自动的去关闭节点流
+bufferedReader.close();
+~~~
+
+##### BufferedWriter 案例
+
+~~~java
+// new FileWriter("d:\\java\\test.txt", true) 表示以追加的方式写入文件
+// new FileWriter("d:\\java\\test.txt") 表示以覆盖的方式写入文件
+BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("d:\\java\\test.txt", true));
+bufferedWriter.write("大人,食大便了1!");
+// 插入一个和系统相关的换行符
+bufferedWriter.newLine();
+bufferedWriter.write("大人,食大便了2!");
+bufferedWriter.close();
+~~~
+
+#### 处理流 - BufferInputStream 和 BufferOutputStream
+
+- `BufferInputStream`: `BufferInputStream `是字节流, 在创建 `BufferInputStream `时, 会创建一个内部缓冲区数组
+- `BufferOutputStream`: `BufferOutputStream` 是字节流, 实现缓冲的输出流, 可以将多个字节写入底层输出流中, 而不必对每次字节写入调用底层系统
+
+#### 对象流 - ObjectInputStream 和 ObjecttOutputStream ( 也是处理流 )
+
+- 看一个需求：
+
+1. 将 `int num = 100`这个 `int` 数据保存到文件中，注意不是 `100` 数字，而是 `int 100`，并且，能够从文件中直接恢复 `int 100`
+2. 将 `Dog dog = new Dog("小黄", 3)` 这个对象保存到文件中，并且能够从文件恢复
+3. 上面的要求，就是能够将 基本数据类型 或者 对象 进行 序列化 和 反序列化操作
+
+- 序列化和反序列化
+
+1. 序列化就是在保存数据时，保存**数据的值**和**数据类型**
+2. 反序列化就是在恢复数据时，恢复**数据的值**和**数据类型**
+3. 需要让某个对象支持序列化机制，则必须让其类是可序列化的，为了让某个类是可序列化的，则该类必须实现如下两个接口之一
+   - `Serializable`     这是一个标记接口, 没有方法
+   - `Externalizable`      该接口有方法要实现，所以一般使用上面的接口
+
+##### 基本介绍
+
+功能：**提供了对基本类型和对象类型的序列化和反序列化的方法**
+
+1. `ObjectInputStream` 提供了 反序列化功能
+
+   ~~~java
+   String filePath = "x:\\xxx.xx";
+   ObjectInputStream ois = new ObjecttInputStream(new FileInputStream(filePath));
+   
+   // 读取
+   // 1. 读取(反序列化)的顺序需要和保存数据(序列化)的顺序一致，否则会出现异常
+   System.out.println(ois.readInt());
+   System.out.println(ois.readBoolean());
+   System.out.println(ois.readChar());
+   System.out.println(ois.readDouble());
+   System.out.println(ois.readUTF());
+   // dog 的编译类型是 Object，运行类型是 Dog
+   Object dog = ois.readObject(); 
+   System.out.println(dog); 
+   System.out.println("运行类型=" + dog.getClass());
+   System.out.println("dog信息=" + dog); // 这里底层 object -> Dog
+   
+   // 这里有一个特别重要的细节
+   // 1. 如果我们希望调用 Dog 的方法
+   // 但是此时 dog 的编译类型是 Object，需要向下转型，如果在不同包，需要先导入这个包的定义
+   Dog dog1 = (Dog)dog;
+   
+   ois.close();
+   ~~~
+
+   
+
+2. `ObjectOutputStream` 提供了 序列化功能
+
+   ~~~java
+   // 演示 ObjectOutputStream 的使用，完成数据的序列化
+   // 序列化后，保存的文本格式，不是纯文本，而是按照他的格式来保存的
+   String filePath = "x:\\xxx.xx";
+   ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath));
+   // 序列化数据到 filePath
+   oos.writeInt(100); // int -> Integer(实现了 Serializable 接口)
+   oos.writeBoolean(true); // boolean -> Boolean(实现了 Serializable 接口)
+   oos.writeChar("a"); // char -> Character(实现了 Serializable 接口)
+   oos.writeDouble(9.5); // double -> Double(实现了 Serializable 接口)
+   oos.writeUTF("余杰"); // String
+   // 保存 Dog 对象，如果 Dog 没有实现 Serializable 接口，那么这句话会抛出一个异常
+   // 解决方法就是让 Dog 类实现 Serializable 接口
+   oos.writeObject(new Dog("小黄"，10));
+   
+   oos.close();
+   System.out.println("数据保存完毕(序列化形式)")
+   
+   // 如果需要序列化某个类的对象，这个类就要实现 Serializable 接口
+   class Dog implements Serializable {
+     private String name;
+     private int age;
+     // serialVersionUID 序列化的版本号，可以提高兼容性
+     // 加了这个属性之后如果此类新增了某些属性，该类不会被认为是一个新类，而是被认为成上一个类的升级版
+     private static final long serialVersionUID = 1L;
+     public Dog(String name, int age){
+       this.name = name;
+       this.age = age;
+     }
+   }
+   ~~~
+
+#### 节点流和处理流的注意事项和细节
+
+   1. 读写顺序一致
+   2. 要求实现序列化或反序列化对象，需要实现 `Serializable`
+   3. 序列化的类中建议添加`SerialVersionUID`, 为了提高版本的兼容性
+   4. 序列化对象时，默认将里面所有属性都进行序列化，但除了 static 或 transient 修饰的成员
+   5. 序列化对象时，要求里面属性的类型也需要实现序列化接口
+   6. 序列化具备可继承性，也就是如果某类已经是实现了序列化，则它的所有子类也已经默认实现了序列化
+
+#### 标准输入输出流
+
+|            | 意思     | 类型         | 默认设备 |
+| ---------- | -------- | ------------ | -------- |
+| System.in  | 标准输入 | InputStream  | 键盘     |
+| System.out | 标准输出 | OutputStream | 显示器   |
+

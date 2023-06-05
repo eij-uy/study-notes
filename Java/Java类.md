@@ -1248,7 +1248,7 @@ final可以修饰类、属性、方法和局部变量
 
 ~~~ java
 abstract final class A {} // 编译不通过, 因为 final 不能继承
-abstract public static void test2(); //编译不通过, 因为static关键字和方法重写无关,了简单来说就是这样方法不能重写
+abstract public static void test2(); //编译不通过, 因为static关键字和方法重写无关,简单来说就是这样方法不能重写
 abstract private void test3(); // 编译不通过, private 方法不能重写
 ~~~
 
