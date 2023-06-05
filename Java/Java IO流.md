@@ -443,7 +443,7 @@ bufferedWriter.close();
    oos.writeBoolean(true); // boolean -> Boolean(实现了 Serializable 接口)
    oos.writeChar("a"); // char -> Character(实现了 Serializable 接口)
    oos.writeDouble(9.5); // double -> Double(实现了 Serializable 接口)
-   oos.writeUTF("余杰"); // String
+   oos.writeUTF("汤姆"); // String(实现了 Serializable 接口)
    // 保存 Dog 对象，如果 Dog 没有实现 Serializable 接口，那么这句话会抛出一个异常
    // 解决方法就是让 Dog 类实现 Serializable 接口
    oos.writeObject(new Dog("小黄"，10));
@@ -551,15 +551,14 @@ PrintStream out = System,out;
 // 默认情况下， PrintStream 输出数据的位置是 标准输出，即显示器
 out.print("john, hello");
 // 因为 print 底层使用的是 write，所以我们可以直接调用 write 进行打印/输出
-out.write("余杰，你好".getBytes());
+out.write("汤姆，你好".getBytes());
 out.close();
 
 // 我们可以去修改打印流输出的位置/设备
 // 1. 输出修改成到 e:\\f1.txt
-// 2. "hello, 余杰~~" 就会输出到 e:\\f1.txt
+// 2. "hello, 汤姆~~" 就会输出到 e:\\f1.txt
 System.setOut(new PrintStream("e:\\f1.txt"));
-System.out.println("hello, 余杰~~");
-
+System.out.println("hello, 汤姆~~");
 ~~~
 
 ##### PrintWriter 演示
