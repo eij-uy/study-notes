@@ -218,14 +218,20 @@ public static void m3(){
 | ----------------------------------------------------- | ------------------------------------------------------------ |
 | `static Class forName(String name)`                   | 返回指定类名 name 的 Class 对象                              |
 | `Object newInstance()`                                | 调用缺省构造函数，返回该 Class 对象的一个实例                |
-| `getName()`                                           | 返回此 Class 对象所表示的实体 ( 类、接口、数组类、基本类型等 ) 名称 |
+| `getName()`                                           | 返回此 Class 对象所表示的实体 ( 类、接口、数组类、基本类型等 ) 名称 【返回全类名】 |
+| `getSimpleName`                                       | 获取简单类名                                                 |
+| `getPackage`                                          | 以 Class 形式返回 包信息                                     |
 | `Class getSuperClass()`                               | 返回当前 Class 对象的父类的 Class 对象                       |
 | `Class[] getInterfaces()`                             | 获取当前 Class 对象的接口                                    |
 | `ClassLoader getClassLoader()`                        | 返回该类的类加载器                                           |
-| `Class getSuperclass()`                               | 返回表示此 Class 所表示的实体的超类的 Class                  |
-| `Constructor[] getConstructors()`                     | 返回一个包含某些 Constructor 对象的数组                      |
-| `Field[] getDeclaredFields()`                         | 返回 Field 对象的一个数组                                    |
+| `Constructor[] getConstructors()`                     | 返回一个包含某些 Constructor 对象的数组【获取所有 public 修饰的构造器，包含本类以及父类的】 |
+| `getDeclaredConstructor`                              | 获取本类中所有构造器                                         |
+| `getFields`                                           | 获取所有 public 修饰的属性，包括本类以及父类的               |
+| `Field[] getDeclaredFields()`                         | 返回 Field 对象的一个数组【获取本类中所有属性】              |
 | `Method getMethod(String name, Class ... paramTypes)` | 返回一个 Method 对象，此对象的形参类型为 paramType           |
+| `getMethods`                                          | 获取所有 public 修饰的方法，包含本类以及父类的               |
+| `getDeclareMethods`                                   | 获取本类中所有方法                                           |
+| `getAnnotations`                                      | 以 Annotation[] 形式返回注解信息   |
 
 ~~~java
 
@@ -419,4 +425,61 @@ Class<Class> cls9 = Class.class; // Class 类
 
 1. 目的是为了确保 Class 文件的字节流中包含的信息符合当前虚拟即的要求，并且不会危害虚拟机自身的安全
 2. 包括：文件格式验证 ( 是否以模数 oxcafebabe 开头 )、元数据验证、字节码验证和符号引用验证
+3. 可以考虑使用 -Xverify:none 参数来关闭大部分的类验证措施，缩短虚拟机类加载的时间
+
+##### 准备
+
+**JVM 会在该阶段对静态变量,分配内存并默认初始化 ( 对应数据类型的么默认初始值, 如 0、0L、null、false 等 )。这些变量所使用的内存都将再方法去中进行分配**
+
+~~~java
+class A {
+  // 1. n1 是实例属性，不是静态变量，因此再准备i阶段，是不会分配内存的
+  public int n1 = 10;
+  // 2. n2 是静态变量，就会分配内存， n2 的值在准备阶段默认初始化 0，而不是 20 ，会在加载的初始化阶段才会赋值 20
+  public static int n2 = 20;
+  // 3. n3 是 static final，是一个常量，他和静态变量不一样，因为一旦赋值就不会改变了，所以在准备阶段 n3 = 30
+  public static final int n3 = 30;
+}
+~~~
+
+##### 解析
+
+**虚拟机将常量池内的符号引用替换为直接引用的过程**
+
+#### 初始化阶段 （Initalization）
+
+1. 到初始化阶段，才真正开始执行类中定义的 Java 程序代码，此阶段是执行 `<clinit>()` 方法的过程
+2. `<clinit>()` 方法是由编译器按语句在源文件中出现的顺序，依次自动收集类中的所有 **静态变量** 的赋值动作和静态代码块中的语句，并进行合并
+3. 虚拟机会保证一个类的 `<clinit>()` 方法在多线程环境中被正确的加锁、同步，如果多个线程同时去初始化一个类，那么只会有一个线程去执行这个类的 `<clinit>()` 方法，其他线程都需要阻塞等待，知道活动线程执行 `<clinit>()` 方法完毕
+
+~~~java
+class B {
+  static {
+    System.out.println("B 静态代码块被执行");
+    num = 300;
+  }
+  static int num = 100;
+  public B(){
+     System.out.println("B 构造器被执行");
+  }
+}
+
+// 1. 加载 B 类，并生成 B 的 calss 对象
+// 2. 链接 num = 0
+// 3. 初始化阶段
+// 3.1 依次自动收集类中的所有 静态变量 的赋值动作和静态代码块中的语句
+// clinit(){
+//   System.out.println("B 静态代码块被执行");
+//   num = 300;
+//	 num = 100;
+// }
+// 3.2 合并
+// clinit(){
+//   System.out.println("B 静态代码块被执行");
+//	 合并：num = 100;
+// }
+
+System.out.println(B.num); // 100, 如果直接使用类的静态属性，也会导致类的加载
+~~~
+
 3. 可以考虑使用 -Xverify:none 参数来关闭大部分的类验证措施，缩短虚拟机类加载的时间
