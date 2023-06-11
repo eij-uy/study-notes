@@ -483,3 +483,340 @@ System.out.println(B.num); // 100, 如果直接使用类的静态属性，也会
 ~~~
 
 3. 可以考虑使用 -Xverify:none 参数来关闭大部分的类验证措施，缩短虚拟机类加载的时间
+
+## 通过反射获取类的结构信息
+
+~~~java
+class A {
+    public String hobby;
+    public void hi(){}
+    public A(){}
+}
+
+interface IA {}
+interface IB {}
+
+@Deprecated
+class Person extends A implements IA,IB {
+    // 属性
+    public String name;
+    protected int age;
+    String job;
+    private double sal;
+    // 构造器
+    public Person(){}
+    public Person(String name){}
+    private Person(String name, int age){}
+    // 方法
+    public void m1(String name, int age, double sal){}
+    protected String m2(){
+        return "";
+    }
+    void m3(){}
+    private void m4(){}
+}
+// 演示如何通过反射获取类的结构信息
+// 1. 第一组方法：API
+// 首先得到 Class 对象
+Class PersonCls = Class.forName("com.yujie.Person");
+// 1.1 getName: 获取全类名
+System.out.println(personCls.getName()); // com.yujie.Person
+// 1.2 getSimpleName：获取简单类名
+System.out.println(personCls.getSimpleName()); // Person
+// 1.3 getFields：获取所有 public 修饰的属性，包含本类以及父类的
+Filed[] fileds = personCls.getFields();
+for(Field field : fields){
+    // name, hobby
+	System.out.println("本类以及父类的属性" + field.getName());
+}
+// 1.4 getDeclaredFields: 获取本类中所有属性
+Field[] declaredFields = personCls.getDeclaredFields();
+for(Field declaredField : declaredFields){
+    // name,age,job,sal
+	System.out.println("本类中所有属性=" + declaredField.getName());
+}
+// 1.5 getMethods: 获取所有 public 修饰的方法，包含本类以及父类的
+Method[] methods = personCls.getMethods();
+for(Method method : methods){
+    // m1,hi(wait,wait,equals...,这些是父类的父类以上的方法)
+	System.out.println("本类以及父类的方法=" + method.getName());
+}
+// 1.6 getDeclaredMethods: 获取本类中所有方法
+Method[] declaredMethods = personCls.getDeclaredMethods();
+for(Method declaredMethod : declaredMethods){
+    // m1,m2,m3,m4
+	System.out.println("本类中所有方法=" + declaredMethod.getName());
+}
+// 1.7 getConstructors: 获取所有 public 修饰的构造器，包含本类的，没有父类的
+Constructor<?>[] constructors = personCls.getConstructors();
+for(Constructor constructor : constructors){
+    // com.yujie.Person, com.yujie.Person
+	System.out.println("本类的构造器=" + constructor.getName());
+}
+// 1.8 getDeclareConstructor: 获取本类中所有构造器
+Constructor<?>[] declaredConstructors = personCls.getDeclareConstructor();
+for(Constructor declaredConstructor : declaredConstructors){
+    // com.yujie.Person, com.yujie.Person， com.yujie.Person
+	System.out.println("本类中所有构造器==" + declaredConstructor.getName());
+}
+// 1.9 getPackage: 以 Package 形式返回包信息
+System.out.println(personCls.getPackage()); // com.yujie
+// 1.10 getSuperClass: 以 Class 形式返回父类信息
+System.out.println(personCls.getSuperClass()); // com.yujie.A
+// 1.11 getInterfaces：以 Class[] 形式返回接口信息
+Class<?>[] interfaces = personCls.getInterfaces();
+for(Class<?> anInterface : interfaces) {
+    // com.yujie.IA, com.yujie.IB
+	System.out.println("接口信息=" + anInterface);
+}
+// 1.12 getAnnotations: 以 Annotation[] 形式返回注解信息
+Annotation[] annotations = personCls.getAnnotations();
+for(Annotation annotation : annotations) {
+    // java.lang.Deprecated
+	System.out.println("注解信息=" + annotation);
+}
+
+// 2. 第二组 java.lang.reflect.Field 类
+for(Field declaredField : declaredFields){
+    // getName: name,age,job,sal
+    // getModifiers: 1,4,0,2
+    // getType: class java.lang.String, int, class java.lang.String, double
+	System.out.println("本类中所有属性=" + declaredField.getName()
+                      + " 该属性的修饰符值=" + declaredField.getModifiers()
+                      + " 该属性的类型=" + declaredField.getType());
+}
+
+// 3. 第三组 java.lang.reflect.Method 类
+for(Method declaredMethod : declaredMethods){
+    // getName: m1,m2,m3,m4
+    // getModifiers: 1,4,2,0
+    // getReturnType: void,class java.lang.String,void,void
+	System.out.println("本类中所有方法=" + declaredMethod.getName()
+                      + " 该方法的访问修饰符=" + declaredMethod.getModifiers()
+                      + " 该方法返回类型=" + declaredMethod.getReturnType());
+    Class<?>[] parameterTypes = declareMethod.getParameterTypes();
+    for(Class<?> parameterType : parameterTypes){
+        // class java.lang.String, int, double
+        System.out.println("该方法的形参类型=" + parameterType);
+    }
+}
+
+// 4. 第四组：java.lang.reflect.Constructor 类
+for(Constructor declaredConstructor : declaredConstructors){
+    // getName：com.yujie.Person, com.yujie.Person， com.yujie.Person
+	System.out.println("本类中所有构造器==" + declaredConstructor.getName());
+    Class<?>[] parameterTypes = declaredConstructor.getParameterTypes();
+    for(Class<?> parameterType : parameterTypes){
+        // class java.lang.String, int
+        // class java.lang.String
+        System.out.println("该构造器的形参类型=" + parameterTypes)
+    }
+}
+~~~
+
+### Field 类常用方法
+
+| 方法名         | 功能说明                                                     |
+| -------------- | ------------------------------------------------------------ |
+| `getModifiers` | 以 int 形式返回修饰符 ( `默认修饰符: 0，public: 1，private: 2,protected: 4, static: 8, final: 16` ) `public static final String name`, 如果是这样的多个修饰符，那么返回的结果就是相加，1 + 8 + 16 = 25 |
+| `getType`      | 以 Class 形式返回类型                                        |
+| `getName`      | 返回属性名                                                   |
+
+### Method 类常用方法
+
+| 方法名              | 功能说明                                                     |
+| ------------------- | ------------------------------------------------------------ |
+| `getModifiers`      | 以 int 形式返回修饰符 ( `默认修饰符: 0，public: 1，private: 2,protected: 4, static: 8, final: 16` ) `public static final String name`, 如果是这样的多个修饰符，那么返回的结果就是相加，1 + 8 + 16 = 25 |
+| `getReturnType`     | 以 Class 形式获取返回类型                                    |
+| `getName`           | 返回方法名                                                   |
+| `getParameterTypes` | 以 Class[] 返回参数类型数组                                  |
+
+### Constructor 类的常用方法
+
+| 方法名              | 功能说明                    |
+| ------------------- | --------------------------- |
+| `getModifiers`      | 以 int 类型返回修饰符，同上 |
+| `getName`           | 返回构造器名 ( 全类名 )     |
+| `getParameterTypes` | 以 Class[] 返回参数类型数组 |
+
+## 通过反射创建对象
+
+- 方式一：调用类中的 public 修饰的无参构造器
+
+- 方式二：调用类中的指定构造器
+
+### Class 类相关方法
+
+| 方法名                                  | 功能说明                                    |
+| --------------------------------------- | ------------------------------------------- |
+| `newInstance`                           | 调用类中的无参构造器，获取对应类的对象      |
+| `getConstructor(Class...clazz)`         | 根据参数列表，获取对应的 public  构造器对象 |
+| `getDeclaredConstructor(Class...clazz)` | 根据参数列表，获取对应的构造器对象          |
+
+### Constructor 类相关方法
+
+| 方法名                      | 功能说明   |
+| --------------------------- | ---------- |
+| `setAccessible`             | 暴破       |
+| `newInstance(Object...obj)` | 调用构造器 |
+
+### 案例
+
+- 测试1：通过反射创建某类的对象，要求该类中必须有 public 的无参构造器
+
+- 测试2：通过调用某个特定构造器的方法，实现创建某类的对象
+
+  ~~~java
+  class User {
+      private int age = 10;
+      private String name = "yujie";
+      public User(){}
+      public User(String name) {
+          this,name = name;
+      }
+      private User(int age, String name){
+          this,age = age;
+          this.name = name;
+      }
+      public String toString(){
+          return "User [age=" + age + ", name=" + name + "]"
+      }
+  }
+  
+  // 1. 先获取到 User 可以的 Class 对象
+  Class<?> userCls = Class.forName("com.yujie.User")
+      
+  // 2. 通过 public 的无参构造器创建实例
+  Object o = userCls.newInstance();
+  System.out.println(o); // User [age=10, name=yujie]
+  
+  // 3. 通过 public 的有参构造器创建实例
+  // 3.1 先得到对应的构造器
+  Constructor constructor = userCls.getConstructor(String.class);
+  // 3.2 创建实例，并传入实参
+  Object yj = constructor.newInstance("yj");
+  Sytem.out.println("yj=" + yj) // yj=User [age=10, name=yj]
+      
+  // 4. 通过非 public 的有参构造器创建实例
+  // 4.1 先得到私有的构造器对象
+  Constructor constructor1 = userCls.getDeclaredConstructor(int.class, String.class);
+  // 4.2 创建实例，如果直接创建会报错--->Object user2 = constructor1.newInstance(100,"zsf");
+  // 4.2.1 暴破【暴力破解】，使用反射可以访问 private 构造器/方法/属性
+  constructor1.setAccessible(true);
+  Object user2 = constructor1.newInstance(100,"zsf");
+  Sytem.out.println("user2=" + user2) // user2=User [age=100, name=zsf]
+  ~~~
+
+## 通过反射访问类中的成员
+
+1. 根据属性名获取 Field 对象
+
+   `Field f = clazz 对象.getDeclaredField(属性名)`
+
+2. 暴破
+
+   `f.setAccessible(true); // f 是 Field` 
+
+3. 访问
+
+   `f.set(o,值); // o 表示对象`  
+
+   `syso(f.get(o)); // o 表示对象`
+
+4. 如果是静态属性，则 set 和 get 中的参数 o，可以写成 null
+
+~~~java
+// 演示反射操作属性
+class Student {
+    public int age;
+    private static String name;
+    
+    public Student(){}
+    public String toString(){
+        return "Student [age=" + age + ", name=" + name + "]";
+    }
+}
+
+// 1. 得到 Student 类对应的 Class 对象
+Class<?> stuCls = Class.forName("com.yujie.Student");
+// 2. 创建对象
+Object o = stuCls.newInstance(); // o 的运行类型就是 Student
+System.out.println(o.getClass()); // com.yujie.Student
+// 3. 使用反射得到 age 属性对象
+Field age = stuClass.getField("age");
+// 4. 通过反射来操作属性
+age.set(o, 88);
+System.out.println(o); // Student [age=88, name=null]
+// 直接返回 age 属性的值
+System.out.println(app.get(o)); // 88
+// 5. 使用反射操作 name 属性【静态私有属性】
+Field name = stuClass.getDeclaredField("name");
+// 这里直接操作属性会报错，因为 name 是私有的
+// 要先试用 setAccessible(true) 进行暴破,之后就可以操作 私有属性了
+name.setAccessible(true); 
+// 这里因为 name 是静态属性，所以 name.set(null, "yj") 也可以
+name.set(o,"yj");
+System.out.println(o);// Student [age=88, name=yj]
+// 直接得到属性,这里同理，因为 name 是静态属性，所以 o 可以改成 null，System.out.println(app.get(null)
+System.out.println(app.get(o)); // yj
+~~~
+
+## 通过反射访问类中的成员
+
+### 访问方法
+
+1. 根据方法名和参数列表获取 Method 方法对象
+
+   `Method m = clazz.getDeclaredMethod(方法名，XX.class); // 得到本类所有方法`
+
+2. 获取对象
+
+   `Object o = clazz,newInstance();`
+
+3. 暴破
+
+   `m.setAccessible(true);`
+
+4. 访问
+
+   `Object returnValue = m.invoke(o,实参列表); // o 表示对象`
+
+5. 注意：如果是静态方法，则 invoke 的参数 o，可以写成 null
+
+~~~java
+class Boss {
+    public int age;
+    private static String name;
+    public Boss(){};
+    private static String say(int n, String s, char c){
+        return n + " " + s + " " + c;
+    }
+    public void hi(String s) {
+        System.out.println("hi " + s);
+    }
+}
+
+// 1. 得到 Boss 类对应的 Class 对象
+Class bossCls = Class.forName("com.yujie.Boss");
+// 2. 创建对象
+Object o = bossCls.newInstance();
+// 3. 调用 public 的 hi 方法
+// 3.1 得到 hi 的方法对象
+Method hi = bossCls.getMethod("hi", String.class);
+//Method hi1 = bossCls.getDeclaredMethod("hi", String.class); 也可以
+// 3.2 调用 
+hi.invoke(o, "xxx");
+// 4. 调用 private static 方法
+// 4.1 得到 say 方法对象
+Method say = bossCls.getDeclaredMethod("say", int.class, String.class, char.class);
+// 4.2 直接调用会调用失败，抛出异常，因为这是一个私有方法
+// 应该先暴破，原理和前面一样
+say.setAccessible(true);
+say.invoke(o, 100, "张三", "男");
+// 4.3 因为 say 方法是 static 的，还可以把 o 换成 null
+say.invoke(null, 100, "张三", "男");
+
+// 返回值, 在反射中，如果方法有返回值，统一返回 Object，但是运行类型和方法定义的返回类型一致
+say.invoke(null, 300, "王五", "男"); 
+~~~
+
