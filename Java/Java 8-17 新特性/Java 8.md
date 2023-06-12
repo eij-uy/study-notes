@@ -2,6 +2,8 @@
 
 # Java 8
 
+**针对于集合，java8 中增加了一个方法 forEach**
+
 ## Lambda 表达式
 
 **适用于接口中只有一个方法**
@@ -492,3 +494,52 @@ Arrays.stream(arr1).sorted(String :: compareTo).forEach(System.out::println);
 ~~~
 
 3. 结束操作
+
+~~~java
+// 匹配与查找
+// 1. allMatch(Predicate p)  检查是否匹配所有元素
+// 1.1 是否所有员工的年龄都大于 18 岁
+List<Employee> list = EmployeeData.getEmployees();
+Boolean flg = list.stream().allMatch(emp -> emp.getAge() > 18);
+// 1.2 是否存在年龄大于 18 岁的员工
+Boolean flg = list.stream().anyMatch(emp -> emp.getAge() > 18);
+
+// 2. findFirst() 返回第一个元素,是一个 Optional，可以通过 get 方法得到原本的类型
+Optional option = list.stream().findFirst();
+Employee emp = option.get();
+
+// 3. count() 返回流中元素的个数
+long count = list.stream().count(); 
+
+// 4. max(Comparator c) 返回流中最大值
+list.stream().map(Employee :: getSalary).max(Double :: compare).get();
+
+// 5. min(Comparator c) 返回流中最小值，同上
+// 6. forEach(Consumer c) 内部迭代
+list.stream().forEach(System.out::println);
+
+// 归约
+// 1. reduce(T identity, BinaryOperator)  可以将流中元素反复结合起来，得到一个值，返回 T
+// 1.1 计算 1 ~ 10 的自然数的和
+List<Integer> list = Arrays.asList(1,2,3,4,5,6,7,8,9,10);
+list.stream().reduce(0, (x1,x2) -> x1 + x2); // 55
+list.stream().reduce(0, (x1,x2) -> Integer.sum(x1,x2)); // 55
+list.stream().reduce(0, Integer :: sum); // 55
+
+// 2. reduce(BinaryOperator)  可以将流中元素反复结合起来，得到一个值，返回Optional<T>
+// 2.1 计算公司所有员工工资的综合
+List<Integer> list1 = EmployeeData.getEmployees();
+list1.stream().map(Employee::getSalary).reduce(Double::sum).get();
+
+// 收集
+// 1. collect 将流转换为其他形式，接收一个 Collector 接口的实现，用于 Stream 中元素做汇总的方法
+// 1.1 查找工资大于 6000 的员工，结果返回一个 List 的 Set
+List<Employee> list2 = list1.stream().collect().filter(Employee::getSalary).collect(Collectors.toList());
+list2.forEach(System.out::println);
+// 1.2 按照员工的年龄进行排序，返回到一个新的 list 中
+List<Employee> list3 = lis1t.stream()
+  .sorted((e1,e2) -> e1.getAge() - e2.getAge())
+  .collect(Collectors.toList());
+list3.forEach(System.out::println);
+~~~
+
