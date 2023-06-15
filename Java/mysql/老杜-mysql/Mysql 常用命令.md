@@ -29,6 +29,7 @@
 | `select database()`                      | 查看当前使用的是哪个数据库 |
 | `show tables`                            | 查看当前数据库下有哪些表   |
 | `describe 表名`  可以缩写为  `desc 表名` | 查看表的结构               |
+| `source sql语句的路径`                   | 执行 sql 文件中的语句      |
 | `exit`                                   | 退出 mysql                 |
 
 

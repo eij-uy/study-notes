@@ -181,6 +181,49 @@
 | `ifnull`                                        | 可以将 `null` 转换成一个具体值，`ifnull(数据，被当作哪个值)` |
 | `case...when...then...when...then...else...end` | 当什么时候该干什么 ( 类似 `switch` )                         |
 
+#### 数字，日期的格式化
+
+- 数字格式化：`format(数字，格式)`
+
+  `select ename,format(sal, '$999.999') from emp`
+
+- 字符串转换日期：`str_to_date` 将字符串 varchar 类型转换成 date 类型
+
+  * `create table t_user (id int, name varchar(32), birth date)`
+
+    `insert into t_user(id,name,birth) values(1, '张三', '01-10-1990')`
+
+    这里使用这个插入语句会报错，因为类型不匹配，数据库的 birth 是 date 类型，而这里给了一个字符串类型
+
+    这里就可以使用 str_to_date 函数
+
+     语法格式：`str_to_date('字符串日期','日期格式')`
+
+  * `insert into t_user(id,name,birth) values(1,'张三',str_to_date('01-10-1990','%d-%m-%Y'))`
+
+    **但是如果这里的 字符串是 '1990-10-01' 那么就不用 str_to_date 这个函数，会自动进行转换**
+
+  * `insert into t_user(id,name,birth) values(2,'李四','1990-10-01')`
+
+  #### mysql 日期格式
+
+  - `%Y`：年
+  - `%m`：月
+  - `%d`：日
+  - `%h`：时
+  - `%i`：分
+  - `%s`：秒
+
+- 日期转换字符串：`date_format` 将 date 类型转换成具有一定格式的 varchar 字符串类型
+
+  想要查询时以某个特定的日期格式展示，可以使用 `date_format`
+
+  语法：`select id,name,date_form(birth, '%m/%d/%Y') from emp`
+
+  `select id,name,birth from emp`
+
+  **这个 SQL 语句实际上是进行了默认的日期格式化，自动将数据库中的 date 类型转换成 varchar 类型，并且采用的格式是 mysql 默认的日期格式 '%Y-%m-%d'**
+
 #### 案例
 
 - 将员工名称转换成小写
@@ -325,7 +368,7 @@
   - 参加分组的字段
   - 分组函数
 
-### 去除重复记录 ---> distinct
+### distinct ---> 去除重复记录
 
 **把查询结果去除重复记录，distinct 只能出现在所有字段的最前方**
 
